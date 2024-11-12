@@ -10,10 +10,16 @@ import TaskHistory from './components/TaskHistory';
 import SystemSettings from './components/SystemSettings';
 import ActiveSystems from './components/ActiveSystems';
 import NetworkHub from './components/NetworkHub';
+import TutorialMode from './components/TutorialMode';
 
 function App() {
   const [activeView, setActiveView] = useState<'dashboard' | 'guide' | 'history' | 'timeline' | 'settings' | 'active' | 'network'>('active');
   const [darkMode, setDarkMode] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    // Check if tutorial has been completed before
+    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+    return !tutorialCompleted;
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -21,6 +27,19 @@ function App() {
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleTutorialComplete = () => {
+    localStorage.setItem('tutorialCompleted', 'true');
+    setShowTutorial(false);
+  };
+
+  const handleTutorialSkip = () => {
+    const skipConfirmed = window.confirm('Are you sure you want to skip the tutorial? You can always access it later from the settings.');
+    if (skipConfirmed) {
+      localStorage.setItem('tutorialCompleted', 'true');
+      setShowTutorial(false);
+    }
   };
 
   const renderContent = () => {
@@ -32,7 +51,23 @@ function App() {
       case 'timeline':
         return <TimelineView />;
       case 'settings':
-        return <SystemSettings />;
+        return (
+          <div className="space-y-8">
+            <SystemSettings />
+            <div className="bg-gray-800 rounded-xl shadow-sm border border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Tutorial</h2>
+              <p className="text-gray-300 mb-4">
+                Need a refresher? You can restart the tutorial at any time.
+              </p>
+              <button
+                onClick={() => setShowTutorial(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Restart Tutorial
+              </button>
+            </div>
+          </div>
+        );
       case 'network':
         return <NetworkHub />;
       case 'active':
@@ -54,6 +89,15 @@ function App() {
         );
     }
   };
+
+  if (showTutorial) {
+    return (
+      <TutorialMode
+        onComplete={handleTutorialComplete}
+        onSkip={handleTutorialSkip}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-gray-900 ${darkMode ? 'dark' : ''}`}>
